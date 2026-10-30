@@ -1,0 +1,9 @@
+{
+  "name": "static-html-project",
+  "version": "1.0.0",
+  "description": "Static HTML project",
+  "private": true,
+  "scripts": {
+    "dev": "npx --yes http-server . -p 3015 -a 0.0.0.0 --cors -c-1"
+  }
+}

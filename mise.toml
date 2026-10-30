@@ -1,0 +1,18 @@
+[tools]
+node = "20"
+
+[meoo.deploy]
+mode = "static"
+output = "."
+
+[tasks.install]
+description = "Install project dependencies"
+run = "echo 'No dependencies to install for static project'"
+
+[tasks.dev]
+description = "Start development server on port 3015"
+run = "npx --yes http-server . -p 3015 -a 0.0.0.0 --cors -c-1"
+
+[tasks.build]
+description = "Build project (static project, no build step)"
+run = "echo 'Static project, no build step required'"

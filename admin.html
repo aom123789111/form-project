@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贷款申请管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f5f5f5; }
+
+        /* 登录页样式 */
+        .login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .login-card { background: #fff; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); padding: 40px; width: 380px; max-width: 90%; }
+        .login-card h2 { text-align: center; color: #333; margin-bottom: 8px; font-size: 24px; }
+        .login-card .subtitle { text-align: center; color: #999; font-size: 13px; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: #555; font-size: 14px; margin-bottom: 6px; }
+        .form-group input { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; outline: none; transition: border-color 0.2s; }
+        .form-group input:focus { border-color: #667eea; }
+        .login-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: opacity 0.2s; }
+        .login-btn:hover { opacity: 0.9; }
+        .login-error { color: #c00; font-size: 13px; text-align: center; margin-top: 12px; display: none; }
+
+        /* 管理后台样式 */
+        .admin-page { display: none; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #900, #c00); color: #fff; padding: 20px 30px; }
+        .header h1 { font-size: 24px; margin-bottom: 5px; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        .toolbar { padding: 15px 30px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .refresh-btn { background: #900; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .refresh-btn:hover { background: #b00; }
+        .logout-btn { background: #666; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-left: 10px; }
+        .logout-btn:hover { background: #888; }
+        .record-count { color: #666; font-size: 14px; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f8f8; padding: 12px 15px; text-align: left; font-weight: bold; color: #333; border-bottom: 2px solid #ddd; white-space: nowrap; }
+        td { padding: 12px 15px; border-bottom: 1px solid #eee; color: #555; }
+        tr:hover { background: #fafafa; }
+        .empty-tip { text-align: center; padding: 60px 20px; color: #999; font-size: 16px; }
+        .loading { text-align: center; padding: 60px 20px; color: #666; }
+        .error-msg { text-align: center; padding: 40px 20px; color: #c00; }
+
+        /* 修改密码弹窗样式 */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-card { background: #fff; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); padding: 30px; width: 400px; max-width: 90%; }
+        .modal-card h3 { text-align: center; color: #333; margin-bottom: 20px; font-size: 20px; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; transition: opacity 0.2s; }
+        .modal-btn.cancel { background: #f5f5f5; color: #666; }
+        .modal-btn.cancel:hover { background: #e5e5e5; }
+        .modal-btn.confirm { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+        .modal-btn.confirm:hover { opacity: 0.9; }
+        .modal-error { color: #c00; font-size: 13px; text-align: center; margin-top: 12px; display: none; }
+    </style>
+</head>
+<body>
+    <!-- 登录页 -->
+    <div class="login-page" id="loginPage">
+        <div class="login-card">
+            <h2>管理后台登录</h2>
+            <p class="subtitle">贷款申请管理系统</p>
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="username" placeholder="请输入用户名" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="password" placeholder="请输入密码">
+            </div>
+            <button class="login-btn" onclick="doLogin()">登 录</button>
+            <div class="login-error" id="loginError">用户名或密码错误</div>
+        </div>
+    </div>
+
+    <!-- 管理后台 -->
+    <div class="admin-page" id="adminPage">
+        <div class="container">
+            <div class="header">
+                <h1>贷款申请管理后台</h1>
+                <p>查看所有用户提交的贷款申请记录</p>
+            </div>
+            <div class="toolbar">
+                <span class="record-count" id="recordCount">加载中...</span>
+                <div>
+                    <button class="refresh-btn" onclick="loadData()">刷新数据</button>
+                    <span id="mainAccountButtons">
+                        <button class="refresh-btn" onclick="showSubAccountModal()">创建子账户</button>
+                        <button class="refresh-btn" onclick="showSubAccountList()">子账户管理</button>
+                        <button class="refresh-btn" id="batchDeleteBtn" onclick="batchDeleteApplications()" style="display:none;background:#c00;">批量删除</button>
+                    </span>
+                    <button class="logout-btn" onclick="showChangePassword()">修改密码</button>
+                    <button class="logout-btn" onclick="doLogout()">退出登录</button>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <div id="content" class="loading">正在加载数据...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码弹窗 -->
+    <div class="modal-overlay" id="passwordModal" style="display:none;">
+        <div class="modal-card">
+            <h3>修改管理员密码</h3>
+            <div class="form-group">
+                <label>当前用户名</label>
+                <input type="text" id="currentUsername" readonly>
+            </div>
+            <div class="form-group">
+                <label>新用户名</label>
+                <input type="text" id="newUsername" placeholder="请输入新用户名">
+            </div>
+            <div class="form-group">
+                <label>新密码</label>
+                <input type="password" id="newPassword" placeholder="请输入新密码">
+            </div>
+            <div class="form-group">
+                <label>确认新密码</label>
+                <input type="password" id="confirmPassword" placeholder="请再次输入新密码">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeChangePassword()">取消</button>
+                <button class="modal-btn confirm" onclick="changePassword()">确认修改</button>
+            </div>
+            <div class="modal-error" id="modalError"></div>
+        </div>
+    </div>
+
+    <!-- 创建子账户弹窗 -->
+    <div class="modal-overlay" id="subAccountModal" style="display:none;">
+        <div class="modal-card">
+            <h3>创建子账户</h3>
+            <div class="form-group">
+                <label>子账户用户名</label>
+                <input type="text" id="subUsername" placeholder="请输入子账户用户名">
+            </div>
+            <div class="form-group">
+                <label>子账户密码</label>
+                <input type="password" id="subPassword" placeholder="请输入子账户密码">
+            </div>
+            <div class="form-group">
+                <label>确认密码</label>
+                <input type="password" id="subConfirmPassword" placeholder="请再次输入密码">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeSubAccountModal()">取消</button>
+                <button class="modal-btn confirm" onclick="createSubAccount()">创建子账户</button>
+            </div>
+            <div class="modal-error" id="subModalError"></div>
+        </div>
+    </div>
+
+    <!-- 子账户管理弹窗 -->
+    <div class="modal-overlay" id="subAccountListModal" style="display:none;">
+        <div class="modal-card" style="width:600px;">
+            <h3>子账户管理</h3>
+            <div id="subAccountListContent" class="loading">加载中...</div>
+            <div class="modal-buttons" style="margin-top:15px;">
+                <button class="modal-btn cancel" onclick="closeSubAccountList()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+        var SUPABASE_URL = 'https://6flhk9nxumzg0lq7.database.meoo.xyz';
+        var SUPABASE_ANON_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzg0NzcxMzI5LCJleHAiOjEzMjk1NDExMzI5fQ.HrtFaKWnYshWiYMLHVNw6TRPeOSsOFiY4tDUuKRXZHg';
+        var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        var purposeMap = {
+            'xiaofei': '日常消费',
+            'jingying': '经营周转',
+            'gouche': '购车',
+            'zhuangxiu': '装修',
+            'lvyou': '旅游',
+            'other': '其他'
+        };
+
+        // 检查登录状态
+        (function() {
+            if (sessionStorage.getItem('admin_logged_in') === 'true') {
+                showAdmin();
+            }
+        })();
+
+        async function doLogin() {
+            var user = document.getElementById('username').value.trim();
+            var pass = document.getElementById('password').value;
+            var errorEl = document.getElementById('loginError');
+
+            if (!user || !pass) {
+                errorEl.textContent = '请输入用户名和密码';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                // 从数据库验证账号
+                var result = await supabase.from('admin_users').select('*').eq('username', user).single();
+
+                if (result.error || !result.data) {
+                    errorEl.textContent = '用户名或密码错误';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                if (result.data.password === pass) {
+                    sessionStorage.setItem('admin_logged_in', 'true');
+                    sessionStorage.setItem('admin_username', user);
+                    sessionStorage.setItem('admin_role', result.data.role || 'sub');
+                    showAdmin();
+                } else {
+                    errorEl.textContent = '用户名或密码错误';
+                    errorEl.style.display = 'block';
+                }
+            } catch(e) {
+                errorEl.textContent = '登录失败：' + e.message;
+                errorEl.style.display = 'block';
+            }
+        }
+
+        function doLogout() {
+            sessionStorage.removeItem('admin_logged_in');
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('adminPage').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        function showAdmin() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('adminPage').style.display = 'block';
+
+            // 根据角色控制按钮显示
+            var userRole = sessionStorage.getItem('admin_role') || 'sub';
+            var mainButtons = document.getElementById('mainAccountButtons');
+            if (userRole === 'main') {
+                mainButtons.style.display = 'inline';
+            } else {
+                mainButtons.style.display = 'none';
+            }
+
+            loadData();
+        }
+
+        // 显示修改密码弹窗
+        function showChangePassword() {
+            var currentUser = sessionStorage.getItem('admin_username') || 'admin';
+            document.getElementById('currentUsername').value = currentUser;
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('modalError').style.display = 'none';
+            document.getElementById('passwordModal').style.display = 'flex';
+        }
+
+        // 关闭修改密码弹窗
+        function closeChangePassword() {
+            document.getElementById('passwordModal').style.display = 'none';
+        }
+
+        // 修改密码
+        async function changePassword() {
+            var newUsername = document.getElementById('newUsername').value.trim();
+            var newPassword = document.getElementById('newPassword').value;
+            var confirmPassword = document.getElementById('confirmPassword').value;
+            var errorEl = document.getElementById('modalError');
+            var currentUser = sessionStorage.getItem('admin_username') || 'admin';
+
+            // 验证输入
+            if (!newUsername) {
+                errorEl.textContent = '请输入新用户名';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (!newPassword) {
+                errorEl.textContent = '请输入新密码';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (newPassword.length < 4) {
+                errorEl.textContent = '密码长度至少4位';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                errorEl.textContent = '两次输入的密码不一致';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                // 先删除旧账号
+                await supabase.from('admin_users').delete().eq('username', currentUser);
+
+                // 插入新账号
+                var result = await supabase.from('admin_users').insert({
+                    username: newUsername,
+                    password: newPassword
+                });
+
+                if (result.error) {
+                    errorEl.textContent = '修改失败：' + result.error.message;
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                // 更新session
+                sessionStorage.setItem('admin_username', newUsername);
+                alert('密码修改成功！请使用新账号登录。');
+                closeChangePassword();
+                doLogout();
+            } catch(e) {
+                errorEl.textContent = '修改失败：' + e.message;
+                errorEl.style.display = 'block';
+            }
+        }
+
+        // 显示创建子账户弹窗
+        function showSubAccountModal() {
+            document.getElementById('subUsername').value = '';
+            document.getElementById('subPassword').value = '';
+            document.getElementById('subConfirmPassword').value = '';
+            document.getElementById('subModalError').style.display = 'none';
+            document.getElementById('subAccountModal').style.display = 'flex';
+        }
+
+        // 关闭创建子账户弹窗
+        function closeSubAccountModal() {
+            document.getElementById('subAccountModal').style.display = 'none';
+        }
+
+        // 创建子账户
+        async function createSubAccount() {
+            var subUsername = document.getElementById('subUsername').value.trim();
+            var subPassword = document.getElementById('subPassword').value;
+            var subConfirmPassword = document.getElementById('subConfirmPassword').value;
+            var errorEl = document.getElementById('subModalError');
+            var currentUser = sessionStorage.getItem('admin_username') || 'admin';
+
+            // 验证输入
+            if (!subUsername) {
+                errorEl.textContent = '请输入子账户用户名';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (!subPassword) {
+                errorEl.textContent = '请输入子账户密码';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (subPassword.length < 4) {
+                errorEl.textContent = '密码长度至少4位';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (subPassword !== subConfirmPassword) {
+                errorEl.textContent = '两次输入的密码不一致';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                // 检查用户名是否已存在
+                var checkResult = await supabase.from('admin_users').select('*').eq('username', subUsername).single();
+                if (checkResult.data) {
+                    errorEl.textContent = '该用户名已存在，请更换';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                // 创建子账户
+                var result = await supabase.from('admin_users').insert({
+                    username: subUsername,
+                    password: subPassword,
+                    role: 'sub',
+                    created_by: currentUser
+                });
+
+                if (result.error) {
+                    errorEl.textContent = '创建失败：' + result.error.message;
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                alert('子账户创建成功！用户名：' + subUsername + '，密码：' + subPassword);
+                closeSubAccountModal();
+            } catch(e) {
+                errorEl.textContent = '创建失败：' + e.message;
+                errorEl.style.display = 'block';
+            }
+        }
+
+        // 显示子账户管理列表
+        async function showSubAccountList() {
+            var currentUser = sessionStorage.getItem('admin_username') || 'admin';
+            document.getElementById('subAccountListContent').className = 'loading';
+            document.getElementById('subAccountListContent').innerHTML = '加载中...';
+            document.getElementById('subAccountListModal').style.display = 'flex';
+
+            try {
+                // 查询当前用户创建的子账户
+                var result = await supabase.from('admin_users').select('*').eq('created_by', currentUser).order('created_at', { ascending: false });
+
+                if (result.error) {
+                    document.getElementById('subAccountListContent').innerHTML = '加载失败：' + result.error.message;
+                    return;
+                }
+
+                var accounts = result.data || [];
+                if (accounts.length === 0) {
+                    document.getElementById('subAccountListContent').innerHTML = '<p style="text-align:center;color:#999;padding:30px;">暂无子账户</p>';
+                    return;
+                }
+
+                var html = '<table style="width:100%;border-collapse:collapse;"><thead><tr>' +
+                    '<th style="padding:10px;text-align:left;border-bottom:2px solid #ddd;">序号</th>' +
+                    '<th style="padding:10px;text-align:left;border-bottom:2px solid #ddd;">用户名</th>' +
+                    '<th style="padding:10px;text-align:left;border-bottom:2px solid #ddd;">创建时间</th>' +
+                    '<th style="padding:10px;text-align:left;border-bottom:2px solid #ddd;">操作</th>' +
+                    '</tr></thead><tbody>';
+
+                accounts.forEach(function(acc, i) {
+                    var time = new Date(acc.created_at).toLocaleString('zh-CN');
+                    html += '<tr>' +
+                        '<td style="padding:10px;border-bottom:1px solid #eee;">' + (i + 1) + '</td>' +
+                        '<td style="padding:10px;border-bottom:1px solid #eee;">' + acc.username + '</td>' +
+                        '<td style="padding:10px;border-bottom:1px solid #eee;">' + time + '</td>' +
+                        '<td style="padding:10px;border-bottom:1px solid #eee;"><button onclick="deleteSubAccount(\'' + acc.username + '\')" style="background:#c00;color:#fff;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;">删除</button></td>' +
+                        '</tr>';
+                });
+
+                html += '</tbody></table>';
+                document.getElementById('subAccountListContent').className = '';
+                document.getElementById('subAccountListContent').innerHTML = html;
+            } catch(e) {
+                document.getElementById('subAccountListContent').innerHTML = '加载失败：' + e.message;
+            }
+        }
+
+        // 关闭子账户管理弹窗
+        function closeSubAccountList() {
+            document.getElementById('subAccountListModal').style.display = 'none';
+        }
+
+        // 删除子账户
+        async function deleteSubAccount(username) {
+            if (!confirm('确定要删除子账户 "' + username + '" 吗？')) {
+                return;
+            }
+
+            try {
+                var result = await supabase.from('admin_users').delete().eq('username', username);
+                if (result.error) {
+                    alert('删除失败：' + result.error.message);
+                    return;
+                }
+                alert('删除成功');
+                showSubAccountList(); // 刷新列表
+            } catch(e) {
+                alert('删除失败：' + e.message);
+            }
+        }
+
+        // 删除客户申请资料(仅主账户可用)
+        async function deleteApplication(id) {
+            if (!confirm('确定要删除这条客户申请资料吗？此操作不可恢复！')) {
+                return;
+            }
+
+            try {
+                var result = await supabase.from('loan_applications').delete().eq('id', id);
+                if (result.error) {
+                    alert('删除失败：' + result.error.message);
+                    return;
+                }
+                alert('删除成功');
+                loadData(); // 刷新列表
+            } catch(e) {
+                alert('删除失败：' + e.message);
+            }
+        }
+
+        // 全选/取消全选
+        function toggleSelectAll() {
+            var selectAllCheckbox = document.getElementById('selectAll');
+            var rowCheckboxes = document.querySelectorAll('.row-checkbox');
+            rowCheckboxes.forEach(function(cb) {
+                cb.checked = selectAllCheckbox.checked;
+            });
+            updateBatchDeleteButton();
+        }
+
+        // 更新全选框状态
+        function updateSelectAllState() {
+            var selectAllCheckbox = document.getElementById('selectAll');
+            var rowCheckboxes = document.querySelectorAll('.row-checkbox');
+            var checkedCount = Array.from(rowCheckboxes).filter(function(cb) { return cb.checked; }).length;
+            selectAllCheckbox.checked = (checkedCount === rowCheckboxes.length && rowCheckboxes.length > 0);
+            selectAllCheckbox.indeterminate = (checkedCount > 0 && checkedCount < rowCheckboxes.length);
+            updateBatchDeleteButton();
+        }
+
+        // 更新批量删除按钮显示
+        function updateBatchDeleteButton() {
+            var batchDeleteBtn = document.getElementById('batchDeleteBtn');
+            var rowCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+            if (rowCheckboxes.length > 0) {
+                batchDeleteBtn.style.display = 'inline-block';
+                batchDeleteBtn.textContent = '批量删除 (' + rowCheckboxes.length + ')';
+            } else {
+                batchDeleteBtn.style.display = 'none';
+            }
+        }
+
+        // 批量删除客户申请资料
+        async function batchDeleteApplications() {
+            var rowCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+            if (rowCheckboxes.length === 0) {
+                alert('请先选择要删除的记录');
+                return;
+            }
+
+            if (!confirm('确定要删除选中的 ' + rowCheckboxes.length + ' 条客户申请资料吗？此操作不可恢复！')) {
+                return;
+            }
+
+            var ids = Array.from(rowCheckboxes).map(function(cb) { return cb.dataset.id; });
+
+            try {
+                var result = await supabase.from('loan_applications').delete().in('id', ids);
+                if (result.error) {
+                    alert('批量删除失败：' + result.error.message);
+                    return;
+                }
+                alert('成功删除 ' + ids.length + ' 条记录');
+                loadData(); // 刷新列表
+            } catch(e) {
+                alert('批量删除失败：' + e.message);
+            }
+        }
+
+        // 回车键登录
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && document.getElementById('loginPage').style.display !== 'none') {
+                doLogin();
+            }
+        });
+
+        async function loadData() {
+            var content = document.getElementById('content');
+            var countEl = document.getElementById('recordCount');
+            content.className = 'loading';
+            content.innerHTML = '正在加载数据...';
+            countEl.textContent = '加载中...';
+
+            try {
+                var result = await supabase.from('loan_applications').select('*').order('created_at', { ascending: false });
+
+                if (result.error) {
+                    content.className = 'error-msg';
+                    content.innerHTML = '加载失败：' + result.error.message;
+                    countEl.textContent = '加载失败';
+                    return;
+                }
+
+                var records = result.data || [];
+                countEl.textContent = '共 ' + records.length + ' 条申请记录';
+
+                if (records.length === 0) {
+                    content.className = 'empty-tip';
+                    content.innerHTML = '暂无申请记录';
+                    return;
+                }
+
+                var userRole = sessionStorage.getItem('admin_role') || 'sub';
+                var html = '<table><thead><tr>';
+
+                // 只有主账户才显示复选框列
+                if (userRole === 'main') {
+                    html += '<th style="width:40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()" title="全选"></th>';
+                }
+
+                html += '<th>序号</th>' +
+                    '<th>姓名</th>' +
+                    '<th>手机号</th>' +
+                    '<th>身份证号</th>' +
+                    '<th>月收入</th>' +
+                    '<th>贷款金额</th>' +
+                    '<th>使用期限</th>' +
+                    '<th>贷款用途</th>' +
+                    '<th>IP地址</th>' +
+                    '<th>地区</th>' +
+                    '<th>提交时间</th>';
+
+                // 只有主账户才显示操作列
+                if (userRole === 'main') {
+                    html += '<th>操作</th>';
+                }
+
+                html += '</tr></thead><tbody>';
+
+                records.forEach(function(r, i) {
+                    var time = new Date(r.created_at).toLocaleString('zh-CN');
+                    html += '<tr>';
+
+                    // 只有主账户才显示复选框
+                    if (userRole === 'main') {
+                        html += '<td><input type="checkbox" class="row-checkbox" data-id="' + r.id + '" onclick="updateSelectAllState()"></td>';
+                    }
+
+                    html += '<td>' + (i + 1) + '</td>' +
+                        '<td>' + (r.name || '-') + '</td>' +
+                        '<td>' + (r.phone || '-') + '</td>' +
+                        '<td>' + (r.id_card || '-') + '</td>' +
+                        '<td>' + (r.monthly_income ? r.monthly_income + ' 元' : '-') + '</td>' +
+                        '<td>' + (r.loan_amount ? r.loan_amount + ' 元' : '-') + '</td>' +
+                        '<td>' + (r.loan_term || '-') + '</td>' +
+                        '<td>' + (purposeMap[r.loan_purpose] || r.loan_purpose || '-') + '</td>' +
+                        '<td>' + (r.ip_address || '-') + '</td>' +
+                        '<td>' + (r.location || '-') + '</td>' +
+                        '<td>' + time + '</td>';
+
+                    // 只有主账户才显示删除按钮
+                    if (userRole === 'main') {
+                        html += '<td><button onclick="deleteApplication(\'' + r.id + '\')" style="background:#c00;color:#fff;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;">删除</button></td>';
+                    }
+
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                content.className = '';
+                content.innerHTML = html;
+            } catch(e) {
+                content.className = 'error-msg';
+                content.innerHTML = '网络错误：' + e.message;
+                countEl.textContent = '加载失败';
+            }
+        }
+    </script>
+</body>
+</html>
