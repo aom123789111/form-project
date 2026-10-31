@@ -1,47 +1,97 @@
-# Meoo 项目开发指南
+FastAdmin是一款基于ThinkPHP+Bootstrap的极速后台开发框架。
 
-本项目从 [Meoo](https://meoo.space) 平台导出，修改后可重新导入。
-以下规则确保项目能被平台正确识别和恢复，请在使用本地 AI 工具（Cursor / Copilot / Claude Code 等）开发时遵守。
 
-## 启动项目
+## 主要特性
 
-```bash
-pnpm install
-pnpm dev
-```
+* 基于`Auth`验证的权限管理系统
+    * 支持无限级父子级权限继承，父级的管理员可任意增删改子级管理员及权限设置
+    * 支持单管理员多角色
+    * 支持管理子级数据或个人数据
+* 强大的一键生成功能
+    * 一键生成CRUD,包括控制器、模型、视图、JS、语言包、菜单、回收站等
+    * 一键压缩打包JS和CSS文件，一键CDN静态资源部署
+    * 一键生成控制器菜单和规则
+    * 一键生成API接口文档
+* 完善的前端功能组件开发
+    * 基于`AdminLTE`二次开发
+    * 基于`Bootstrap`开发，自适应手机、平板、PC
+    * 基于`RequireJS`进行JS模块管理，按需加载
+    * 基于`Less`进行样式开发
+* 强大的插件扩展功能，在线安装卸载升级插件
+* 通用的会员模块和API模块
+* 共用同一账号体系的Web端会员中心权限验证和API接口会员权限验证
+* 二级域名部署支持，同时域名支持绑定到应用插件
+* 多语言支持，服务端及客户端支持
+* 支持大文件分片上传、剪切板粘贴上传、拖拽上传，进度条显示，图片上传前压缩
+* 支持表格固定列、固定表头、跨页选择、Excel导出、模板渲染等功能
+* 强大的第三方应用模块支持([CMS](https://www.fastadmin.net/store/cms.html)、[博客](https://www.fastadmin.net/store/blog.html)、[知识付费问答](https://www.fastadmin.net/store/ask.html)、[在线投票系统](https://www.fastadmin.net/store/vote.html)、[B2C商城](https://www.fastadmin.net/store/shopro.html)、[B2B2C商城](https://www.fastadmin.net/store/wanlshop.html))
+* 支持CMS、博客、知识付费问答无缝整合[Xunsearch全文搜索](https://www.fastadmin.net/store/xunsearch.html)
+* 第三方小程序支持([CMS小程序](https://www.fastadmin.net/store/cms.html)、[预订小程序](https://www.fastadmin.net/store/ball.html)、[问答小程序](https://www.fastadmin.net/store/ask.html)、[点餐小程序](https://www.fastadmin.net/store/unidrink.html)、[B2C小程序](https://www.fastadmin.net/store/shopro.html)、[B2B2C小程序](https://www.fastadmin.net/store/wanlshop.html)、[博客小程序](https://www.fastadmin.net/store/blog.html))
+* 整合第三方短信接口(阿里云、腾讯云短信)
+* 无缝整合第三方云存储(七牛云、阿里云OSS、又拍云)功能，支持云储存分片上传
+* 第三方富文本编辑器支持(Summernote、Kindeditor、百度编辑器)
+* 第三方登录(QQ、微信、微博)整合
+* 第三方支付(微信、支付宝)无缝整合，微信支持PC端扫码支付
+* 丰富的插件应用市场
 
-开发服务器端口：**3015**（`http://localhost:3015`）
+## 安装使用
 
-## 开发约束
+https://doc.fastadmin.net
 
-- **技术栈**：vanilla + none，不要更换框架或构建工具（如切换为 Angular / Svelte），否则导入时会被拒绝
-- **不要删除以下文件**：`meoo-manifest.json`、`meoo-cloud-snapshot.json`（重新导入时需要；同名隐藏文件为平台兼容副本）
+## 在线演示
 
-## 云服务（Supabase）
+https://demo.fastadmin.net
 
-### 数据库
+用户名：admin
 
-- `src/supabase/client.ts` — Supabase 客户端配置，**不要删除或重命名此文件**（平台靠它检测云服务状态）
-- 修改数据库结构时，在 `migrations/` 目录下**新增** `.sql` 文件，不要修改或删除已有的 migration 文件
-- 命名格式：`YYYYMMDD_HHmmss_name.sql`，name 为纯小写 snake_case（如 `20260605_120000_add_orders_table.sql`）
-- 平台按文件名字典序执行，时间戳前缀保证顺序
-- **必须使用幂等语法**：`CREATE TABLE IF NOT EXISTS`、`CREATE OR REPLACE FUNCTION`、`DROP ... IF EXISTS` + `CREATE`，因为导入时所有 migration 会重新执行
-- SQL 内容为纯 DDL（CREATE / ALTER / DROP），整个文件作为一条语句执行
+密　码：123456
 
-### Edge Functions
+提　示：演示站数据无法进行修改，请下载源码安装体验全部功能
 
-- 云函数放在 `functions/<函数名>/index.ts`
-- 每个函数一个目录，入口必须是 `index.ts`
-- 导入后平台会自动部署所有检测到的云函数
+## 界面截图
+![控制台](https://images.gitee.com/uploads/images/2020/0929/202947_8db2d281_10933.gif "控制台")
 
-### 环境变量
+## 问题反馈
 
-- 系统变量（`SUPABASE_URL`、`SUPABASE_ANON_KEY` 等）导入后自动配置，无需手动管理
-- 自定义环境变量（如第三方 API Key）导入后需要在平台上重新设置
+在使用中有任何问题，请使用以下联系方式联系我们
 
-## 导入回平台
+交流社区: https://ask.fastadmin.net
 
-1. 将项目打包为 ZIP（排除 `node_modules`、`.git`、`dist` 目录）
-2. 在 Meoo 首页点击输入框的「+」→「导入项目」
-3. 上传 ZIP → 平台自动验证 → 创建新项目
-4. 点击「确认开启云服务」一键恢复数据库和云函数
+QQ 1 群（满）、QQ 2 群（满）、QQ 3 群（满）、QQ 4 群（满）、QQ 5 群（满）、QQ 6 群（满）、[QQ 7 群](https://www.fastadmin.net/goto/qun)。
+
+Github: https://github.com/karsonzhang/fastadmin
+
+Gitee: https://gitee.com/karson/fastadmin
+
+## 特别鸣谢
+
+感谢以下的项目,排名不分先后
+
+ThinkPHP：http://www.thinkphp.cn
+
+AdminLTE：https://adminlte.io
+
+Bootstrap：http://getbootstrap.com
+
+jQuery：http://jquery.com
+
+Bootstrap-table：https://github.com/wenzhixin/bootstrap-table
+
+Nice-validator: https://validator.niceue.com
+
+SelectPage: https://github.com/TerryZ/SelectPage
+
+Layer: https://layuion.com/layer/
+
+DropzoneJS: https://www.dropzonejs.com
+
+
+## 版权信息
+
+FastAdmin遵循Apache2开源协议发布，并提供免费使用。
+
+本项目包含的第三方源码和二进制文件之版权信息另行标注。
+
+版权所有Copyright © 2017-2022 by FastAdmin (https://www.fastadmin.net)
+
+All rights reserved。
